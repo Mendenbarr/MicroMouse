@@ -1,0 +1,46 @@
+# depslib dependency file v1.0
+1663650595 source:d:\documents\school\computersystems\micromouse\formulas.c
+	"formulas.h"
+
+1663650595 d:\documents\school\computersystems\micromouse\formulas.h
+	"math.h"
+
+1694961906 source:d:\documents\school\computersystems\micromouse\main.c
+	"stdio.h"
+	"stdlib.h"
+	"sdl.h"
+	"SDL2_gfx-1.0.1/SDL2_gfxPrimitives.h"
+	"time.h"
+	"formulas.h"
+	"wall.h"
+	"robot.h"
+
+1402271470 d:\documents\school\computersystems\micromouse\sdl2_gfx-1.0.1\sdl2_gfxprimitives.h
+	<math.h>
+	"SDL.h"
+
+1694951058 d:\documents\school\computersystems\micromouse\wall.h
+	"stdio.h"
+	"stdlib.h"
+	"sdl.h"
+	"SDL2_gfx-1.0.1/SDL2_gfxPrimitives.h"
+	"structures.h"
+
+1663650595 d:\documents\school\computersystems\micromouse\structures.h
+
+1694951053 d:\documents\school\computersystems\micromouse\robot.h
+	"stdio.h"
+	"stdlib.h"
+	"sdl.h"
+	"SDL2_gfx-1.0.1/SDL2_gfxPrimitives.h"
+	"formulas.h"
+	"time.h"
+	"wall.h"
+	"math.h"
+
+1663650595 source:d:\documents\school\computersystems\micromouse\wall.c
+	"wall.h"
+
+1696920299 source:d:\documents\school\computersystems\micromouse\robot.c
+	"robot.h"
+
