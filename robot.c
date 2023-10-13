@@ -1,10 +1,18 @@
 #include "robot.h"
 
 void setup_robot(struct Robot *robot){
-    robot->x = OVERALL_WINDOW_WIDTH/2-50;
-    robot->y = OVERALL_WINDOW_HEIGHT-50;
-    robot->true_x = OVERALL_WINDOW_WIDTH/2-50;
-    robot->true_y = OVERALL_WINDOW_HEIGHT-50;
+//    Maze 1
+//    robot->x = OVERALL_WINDOW_WIDTH/2-50;
+//    robot->y = OVERALL_WINDOW_HEIGHT-50;
+//    robot->true_x = OVERALL_WINDOW_WIDTH/2-50;
+//    robot->true_y = OVERALL_WINDOW_HEIGHT-50;
+//    Maze 2
+    robot->x = 60;
+    robot->y = 430;
+    robot->true_x = 60;
+    robot->true_y = 430;
+
+
     robot->width = ROBOT_WIDTH;
     robot->height = ROBOT_HEIGHT;
     robot->direction = 0;
@@ -331,6 +339,7 @@ void robotMotorMove(struct Robot * robot, int crashed) {
 // state 2: Confirmed that following the left wall leads deeper into the maze
 // state 3: Confirmed that following the right wall leads deeper into the maze
 int state = 0;
+int deadEnd = 0;
 void robotAutoMotorMove(struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor) {
 
     if (state == 0 ) {
@@ -342,18 +351,21 @@ void robotAutoMotorMove(struct Robot * robot, int front_centre_sensor, int left_
             if (robot->currentSpeed<4)
                 robot->direction = UP; // No obstacles in front, speed up
         }
-        else if ((robot->currentSpeed>0) && ((front_centre_sensor >= 1) )) {
+        else if (robot->currentSpeed>0 && front_centre_sensor >= 1) {
             robot->direction = DOWN; // Slow down, something in front
             robot->direction = LEFT;
         }
-        else if ((robot->currentSpeed==0) ) {
+        else if (robot->currentSpeed==0) {
             robot->direction = LEFT; // Stopped, turn left until no more obstacles
         }
     }
     else if (state == 1 ) {
         if (front_centre_sensor != 0 && robot->angle == 270) {
-            state = 2; // Wall found when following right wall, most likely leads back to start, follow left wall
-            printf("Entering State 2\n");
+            robot->direction = DOWN;
+            if (robot->currentSpeed==0) {
+                state = 2; // Wall found when following right wall, most likely leads back to start, follow left wall
+                printf("Entering State 2\n");
+            }
         }
         else if (right_sensor == 0 && robot->angle == 270) {
             state = 3; // Opening found when following right wall, stay on right wall
@@ -384,28 +396,37 @@ void robotAutoMotorMove(struct Robot * robot, int front_centre_sensor, int left_
 
 void followWall(int Direction, struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor){
     int sensor;
+    int opSensor;
     int opDirection;
     if (Direction == RIGHT){
         sensor = right_sensor;
+        opSensor = left_sensor;
         opDirection = LEFT;
     }
     else {
         sensor = left_sensor;
+        opSensor = right_sensor;
         opDirection = RIGHT;
     }
-    if (front_centre_sensor != 0){
-        printf("Front\n");
+    if (front_centre_sensor > 1 && sensor > 1 && opSensor > 1){
+        robot->direction = DOWN; // Slow down, something in front
+    }
+    else if (front_centre_sensor > 1 && robot->currentSpeed>0 && (sensor > 3 || opSensor > 3)){
+        robot->direction = DOWN; // Slow down, something in front
+    }
+    else if (front_centre_sensor != 0){
         robot->direction = opDirection; // Turn to avoid running into wall
     }
     else if (sensor < 1) {
         robot->direction = Direction;   // Turn to stay the same distance from the wall
-        printf("Right\n");
     }
-    else if (sensor > 3) {
+    else if (sensor > 1) {
         robot->direction = opDirection;    // Turn to stay the same distance from the wall
-        printf("Left\n");
     }
-    if (robot->currentSpeed<8) robot->direction = UP;
+    else if (robot->currentSpeed == 0){
+        robot->direction = UP;
+    }
+    if (robot->currentSpeed<5 && front_centre_sensor == 0 && sensor == 2 && opSensor == 0) robot->direction = UP;
 }
 
 void robotAutoMotorMoveOld(struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor) {
