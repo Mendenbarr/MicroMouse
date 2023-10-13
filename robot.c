@@ -324,36 +324,89 @@ void robotMotorMove(struct Robot * robot, int crashed) {
     robot->x = (int) x_offset;
     robot->y = (int) y_offset;
 }
-int start = 1;
+
+// What state the robot is
+// state 0: Starting state
+// state 1: Found the wall with the right sensor
+// state 2: Confirmed that following the left wall leads deeper into the maze
+// state 3: Confirmed that following the right wall leads deeper into the maze
+int state = 0;
 void robotAutoMotorMove(struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor) {
 
-    if ((right_sensor >= 2)&& start == 1 ) {
-        start = 0; // Found the wall on the right
-        printf("Start over\n");
+    if (state == 0 ) {
+        if (right_sensor >= 1) {
+            state = 1; // Found the wall on the right, swap to state 1
+            printf("Entering State 1\n");
+        }
+        else if (front_centre_sensor == 0 && left_sensor <= 2 && right_sensor <= 2) {
+            if (robot->currentSpeed<4)
+                robot->direction = UP; // No obstacles in front, speed up
+        }
+        else if ((robot->currentSpeed>0) && ((front_centre_sensor >= 1) )) {
+            robot->direction = DOWN; // Slow down, something in front
+            robot->direction = LEFT;
+        }
+        else if ((robot->currentSpeed==0) ) {
+            robot->direction = LEFT; // Stopped, turn left until no more obstacles
+        }
     }
-    else if ((right_sensor < 1) && start == 0 && robot->currentSpeed!=0) {
-        robot->direction = RIGHT;   // If too far from right wall, turn right
+    else if (state == 1 ) {
+        if (front_centre_sensor != 0 && robot->angle == 270) {
+            state = 2; // Wall found when following right wall, most likely leads back to start, follow left wall
+            printf("Entering State 2\n");
+        }
+        else if (right_sensor == 0 && robot->angle == 270) {
+            state = 3; // Opening found when following right wall, stay on right wall
+            printf("Entering State 3\n");
+        }
+        else if (right_sensor < 1) {
+            robot->direction = RIGHT;   // If too far from right wall, turn right
+        }
+        else if (right_sensor > 3) {
+            robot->direction = LEFT;    // If too close to right wall, turn left
+        }
+        else if ((front_centre_sensor == 0) && ((left_sensor <= 2) ) && ((right_sensor <= 2) )) {
+            if (robot->currentSpeed<6)
+                robot->direction = UP; // No obstacles in front, go forward
+        }
+        else if ((robot->currentSpeed>0) && ((front_centre_sensor >= 1) )) {
+            robot->direction = DOWN; // Slow down, something in front
+            robot->direction = LEFT;
+        }
     }
-    else if ((right_sensor > 3) && start == 0 && robot->currentSpeed!=0) {
-        robot->direction = LEFT;    // If too close to right wall, turn left
+    else if (state == 2 ) {
+        followWall(LEFT, robot, front_centre_sensor, left_sensor, right_sensor);
     }
-    else if ((front_centre_sensor == 0) && ((left_sensor <= 2) ) && ((right_sensor <= 2) )) {
-        if (robot->currentSpeed<6)
-            robot->direction = UP; // No obstacles in front, go forward
+    else if (state == 3 ) {
+        followWall(RIGHT, robot, front_centre_sensor, left_sensor, right_sensor);
     }
-    else if ((robot->currentSpeed>0) && ((front_centre_sensor >= 1) )) {
-        robot->direction = DOWN; // Slow down, something in front
-    }
-    else if ((robot->currentSpeed==0) ) {
-        robot->direction = LEFT; // Stopped, turn left until time to go
-    }
-    else {
-        printf("Stuck");
-    }
-
 }
 
-
+void followWall(int Direction, struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor){
+    int sensor;
+    int opDirection;
+    if (Direction == RIGHT){
+        sensor = right_sensor;
+        opDirection = LEFT;
+    }
+    else {
+        sensor = left_sensor;
+        opDirection = RIGHT;
+    }
+    if (front_centre_sensor != 0){
+        printf("Front\n");
+        robot->direction = opDirection; // Turn to avoid running into wall
+    }
+    else if (sensor < 1) {
+        robot->direction = Direction;   // Turn to stay the same distance from the wall
+        printf("Right\n");
+    }
+    else if (sensor > 3) {
+        robot->direction = opDirection;    // Turn to stay the same distance from the wall
+        printf("Left\n");
+    }
+    if (robot->currentSpeed<8) robot->direction = UP;
+}
 
 void robotAutoMotorMoveOld(struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor) {
 
