@@ -7,11 +7,30 @@ void setup_robot(struct Robot *robot){
 //    robot->true_x = OVERALL_WINDOW_WIDTH/2-50;
 //    robot->true_y = OVERALL_WINDOW_HEIGHT-50;
 //    Maze 2
-    robot->x = 60;
-    robot->y = 430;
-    robot->true_x = 60;
-    robot->true_y = 430;
-
+//    robot->x = 60;
+//    robot->y = 430;
+//    robot->true_x = 60;
+//    robot->true_y = 430;
+    // Maze 3
+//    robot->x = 25;
+//    robot->y = 450;
+//    robot->true_x = 25;
+//    robot->true_y = 450;
+    // Maze 4
+//    robot->x = OVERALL_WINDOW_WIDTH/2-40;
+//    robot->y = OVERALL_WINDOW_HEIGHT-40;
+//    robot->true_x = OVERALL_WINDOW_WIDTH/2-40;
+//    robot->true_y = OVERALL_WINDOW_HEIGHT-40;
+    // Maze 5
+//    robot->x = OVERALL_WINDOW_WIDTH/2-50;
+//    robot->y = OVERALL_WINDOW_HEIGHT-50;
+//    robot->true_x = OVERALL_WINDOW_WIDTH/2-50;
+//    robot->true_y = OVERALL_WINDOW_HEIGHT-50;
+    // Maze 6
+    robot->x = 40;
+    robot->y = 410;
+    robot->true_x = 40;
+    robot->true_y = 410;
 
     robot->width = ROBOT_WIDTH;
     robot->height = ROBOT_HEIGHT;
@@ -335,47 +354,29 @@ void robotMotorMove(struct Robot * robot, int crashed) {
 
 // What state the robot is
 // state 0: Starting state
-// state 1: Found the wall with the right sensor
-// state 2: Confirmed that following the left wall leads deeper into the maze
-// state 3: Confirmed that following the right wall leads deeper into the maze
+// state 1: Turned to face Right
+// state 2: Following the right wall
+// state 3: Following the left wall
 int state = 0;
-int deadEnd = 0;
 void robotAutoMotorMove(struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor) {
-
     if (state == 0 ) {
-        if (right_sensor >= 1) {
-            state = 1; // Found the wall on the right, swap to state 1
+        if (right_sensor != 0) {
+            state = 2; // Follow right wall
+            printf("Entering State 2\n");
+        }
+        else if (robot->angle != 90 ) {
+            robot->direction = UP;
+            robot->direction = RIGHT;
+        }
+        else {
+            state = 1; // Turned to face the wall on the right, swap to state 1
             printf("Entering State 1\n");
-        }
-        else if (front_centre_sensor == 0 && left_sensor <= 2 && right_sensor <= 2) {
-            if (robot->currentSpeed<4)
-                robot->direction = UP; // No obstacles in front, speed up
-        }
-        else if (robot->currentSpeed>0 && front_centre_sensor >= 1) {
-            robot->direction = DOWN; // Slow down, something in front
-            robot->direction = LEFT;
-        }
-        else if (robot->currentSpeed==0) {
-            robot->direction = LEFT; // Stopped, turn left until no more obstacles
         }
     }
     else if (state == 1 ) {
-        if (front_centre_sensor != 0 && robot->angle == 270) {
-            robot->direction = DOWN;
-            if (robot->currentSpeed==0) {
-                state = 2; // Wall found when following right wall, most likely leads back to start, follow left wall
-                printf("Entering State 2\n");
-            }
-        }
-        else if (right_sensor == 0 && robot->angle == 270) {
-            state = 3; // Opening found when following right wall, stay on right wall
-            printf("Entering State 3\n");
-        }
-        else if (right_sensor < 1) {
-            robot->direction = RIGHT;   // If too far from right wall, turn right
-        }
-        else if (right_sensor > 3) {
-            robot->direction = LEFT;    // If too close to right wall, turn left
+        if (right_sensor != 0) {
+            state = 2; // Follow right wall
+            printf("Entering State 2\n");
         }
         else if ((front_centre_sensor == 0) && ((left_sensor <= 2) ) && ((right_sensor <= 2) )) {
             if (robot->currentSpeed<6)
@@ -387,10 +388,10 @@ void robotAutoMotorMove(struct Robot * robot, int front_centre_sensor, int left_
         }
     }
     else if (state == 2 ) {
-        followWall(LEFT, robot, front_centre_sensor, left_sensor, right_sensor);
+        followWall(RIGHT, robot, front_centre_sensor, left_sensor, right_sensor);
     }
     else if (state == 3 ) {
-        followWall(RIGHT, robot, front_centre_sensor, left_sensor, right_sensor);
+        followWall(LEFT, robot, front_centre_sensor, left_sensor, right_sensor);
     }
 }
 
@@ -411,9 +412,6 @@ void followWall(int Direction, struct Robot * robot, int front_centre_sensor, in
     if (front_centre_sensor > 1 && sensor > 1 && opSensor > 1){
         robot->direction = DOWN; // Slow down, something in front
     }
-    else if (front_centre_sensor > 1 && robot->currentSpeed>0 && (sensor > 3 || opSensor > 3)){
-        robot->direction = DOWN; // Slow down, something in front
-    }
     else if (front_centre_sensor != 0){
         robot->direction = opDirection; // Turn to avoid running into wall
     }
@@ -421,12 +419,13 @@ void followWall(int Direction, struct Robot * robot, int front_centre_sensor, in
         robot->direction = Direction;   // Turn to stay the same distance from the wall
     }
     else if (sensor > 1) {
-        robot->direction = opDirection;    // Turn to stay the same distance from the wall
+        if (sensor + opSensor > sensor *2) robot->direction = Direction;// If you are close to both right and left wall, turn the opposite direction
+        else robot->direction = opDirection;    // Turn to stay the same distance from the wall
     }
     else if (robot->currentSpeed == 0){
         robot->direction = UP;
     }
-    if (robot->currentSpeed<5 && front_centre_sensor == 0 && sensor == 2 && opSensor == 0) robot->direction = UP;
+    if (robot->currentSpeed<5 && front_centre_sensor == 0 ) robot->direction = UP;
 }
 
 void robotAutoMotorMoveOld(struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor) {
