@@ -358,6 +358,9 @@ void robotMotorMove(struct Robot * robot, int crashed) {
 // state 2: Following the right wall
 // state 3: Following the left wall
 int state = 0;
+int deadEnd = 0;
+int deadEndAngle = 0;
+int wallGap = 0; // Average distance to the wall when the robot is exactly in the middle of two walls. Assumes space remains constant throughout maze
 void robotAutoMotorMove(struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor) {
     if (state == 0 ) {
         if (right_sensor != 0) {
@@ -409,23 +412,57 @@ void followWall(int Direction, struct Robot * robot, int front_centre_sensor, in
         opSensor = right_sensor;
         opDirection = RIGHT;
     }
-    if (front_centre_sensor > 1 && sensor > 1 && opSensor > 1){
-        robot->direction = DOWN; // Slow down, something in front
+    // The first time the robot is equidistant from both walls, record it as wellGap.
+    if (wallGap == 0){
+        if (sensor == opSensor) wallGap = sensor;
     }
-    else if (front_centre_sensor != 0){
-        robot->direction = opDirection; // Turn to avoid running into wall
+    if (deadEnd == 0){
+        if (front_centre_sensor > 0 && robot->currentSpeed > 1){
+            robot->direction = DOWN; // Slow down before you hit something
+            printf("C6\n");
+        }
+        if (front_centre_sensor > 0 && sensor > 1 && opSensor > 1){
+            robot->direction = DOWN; // Slow down until you back out, something in all directions
+            deadEndAngle = (robot->angle + 180)%360;
+            deadEnd = 1; // We have most likely reached a dead end.
+            printf("C7\n");
+        }
+        else if (front_centre_sensor > 0 ){
+            robot->direction = opDirection; // Turn to avoid running into wall
+            printf("C1\n");
+        }
+        else if (wallGap == 0 && sensor != 1 ){ // If no wallGap has been found, try to stay at max disstance from the wall.
+            if (sensor < 1) {
+                robot->direction = Direction;   // Turn to stay the same distance from the wall
+                printf("C4\n");
+            }
+            else if (sensor > 1) {
+                robot->direction = opDirection;    // Turn to stay the same distance from the wall
+                printf("C5\n");
+            }
+        }
+        else if (wallGap != 0 && sensor < wallGap) {
+                robot->direction = RIGHT;   // Turn to stay the same distance from the wall
+                printf("C2\n");
+        }
+        else if (wallGap != 0 && sensor > wallGap) {
+                robot->direction = opDirection; // Turn to stay the same distance from the wall
+                printf("C3\n");
+        }
+        else if (robot->currentSpeed == 0){
+            robot->direction = UP;
+            printf("C8\n");
+        }
+        if (robot->currentSpeed<5 && front_centre_sensor == 0 ) robot->direction = UP;
     }
-    else if (sensor < 1) {
-        robot->direction = Direction;   // Turn to stay the same distance from the wall
+    else {
+        if (robot->currentSpeed>0) robot->direction = DOWN; // Stop moving
+        else if (robot->angle != deadEndAngle) {
+                robot->direction = LEFT; // Turn 180
+                printf("C9\n");
+        }
+        else deadEnd = 0;
     }
-    else if (sensor > 1) {
-        if (sensor + opSensor > sensor *2) robot->direction = Direction;// If you are close to both right and left wall, turn the opposite direction
-        else robot->direction = opDirection;    // Turn to stay the same distance from the wall
-    }
-    else if (robot->currentSpeed == 0){
-        robot->direction = UP;
-    }
-    if (robot->currentSpeed<5 && front_centre_sensor == 0 ) robot->direction = UP;
 }
 
 void robotAutoMotorMoveOld(struct Robot * robot, int front_centre_sensor, int left_sensor, int right_sensor) {

@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 //    insertAndSetFirstWall(&head, 1, 300, 200, 360, 8);
 //    insertAndSetFirstWall(&head, 1, 8, 80, 50, 8);
 //    insertAndSetFirstWall(&head, 1, 410, 85, 168, 8);
-
+//
 //    for (int i = 0; i < 75; i++) {
 //        insertAndSetFirstWall(&head, i + 14, 70 - 70 * cos(i * (M_PI/75)), 300 - 70 * sin(i * (M_PI/75)), 8, 8);
 //    }
